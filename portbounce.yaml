@@ -1,0 +1,33 @@
+- hosts: all
+  connection: local
+  vars:
+    # We are currently assuming that AAA is dropping the user into privileged exec mode
+    #interface: GigabitEthernet1/3
+
+  tasks:
+    - name: Gather Facts
+      register: iosfacts
+      ios_facts:
+        host: "{{ inventory_hostname }}"
+        authorize: true
+    # we'll save the output for good measure
+    - copy: content="{{ iosfacts['ansible_facts']['ansible_net_interfaces'][interface] | to_nice_json }}" dest="out/{{inventory_hostname}}_iosfacts.json"
+
+
+    - name: "Administratively Disable port"
+      when: iosfacts['ansible_facts']['ansible_net_interfaces'][interface]['lineprotocol'] == 'down (err-disabled) '
+      ios_config:
+
+        host: "{{ inventory_hostname }}"
+        lines:
+          - shutdown
+        parents: interface {{interface}}
+
+
+    - name: "Administratively Enable port"
+      when: iosfacts['ansible_facts']['ansible_net_interfaces'][interface]['lineprotocol'] == 'down (err-disabled) '
+      ios_config:
+        host: "{{ inventory_hostname }}"
+        lines:
+          - no shutdown
+        parents: interface {{interface}}

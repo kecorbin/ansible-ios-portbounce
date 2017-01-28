@@ -1,0 +1,5 @@
+# python virtualenvs
+venv/*
+out/*
+# ansible retry files
+*.retry
